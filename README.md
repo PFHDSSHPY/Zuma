@@ -1,0 +1,2 @@
+# Zuma
+[GAME]Easy Zuma

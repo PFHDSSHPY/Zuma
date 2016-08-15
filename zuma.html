@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>zuma</title>
+</head>
+<style>
+    * {
+        margin: 0px;
+        padding: 0px;
+    }
+
+    body {
+        background: black;
+    }
+
+    #div1 {
+        background: white;
+        width: 600px;
+        margin: 20px auto;
+    }
+
+</style>
+<body>
+<div id="div1">
+    <canvas id="c1" width="600" height="600">
+
+    </canvas>
+</div>
+<script>
+    window.onload = function () {
+        var oDiv = document.getElementById('div1');
+        var oC2 = document.getElementById('c1');
+//        创建画布
+        var ogc = oC2.getContext('2d');
+//        插入中心旋转图片（等图片加载完[yImg.onload]，才开始加载其他）
+        var yImg = new Image();
+        yImg.src = 'pointer.jpg';
+        yImg.onload = function () {
+//        ★ 此setInterval函数执行的是画布上所有图案的绘制
+            setInterval(function () {
+//        清理画布，避免出现setInterval让物体运动后出现的画布残影
+                ogc.clearRect(0, 0, oC2.width, oC2.height);
+
+//        画运行路线（采用方式，先画大圆，不闭合，在固定角度停住，画下一个不同圆心，不同起点的路径）
+                ogc.beginPath();
+//        弧度=角度*math.PI/180（大圆1）
+                ogc.arc(300, 200, 200, -90 * Math.PI / 180, 180 * Math.PI / 180, false);
+                ogc.stroke();
+
+                ogc.beginPath();
+//        弧度=角度*math.PI/180（圆2）
+                ogc.arc(250, 200, 150, 180 * Math.PI / 180, 360 * Math.PI / 180, false);
+                ogc.stroke();
+
+//        终点球袋
+                ogc.beginPath();
+//        弧度=角度*math.PI/180
+                ogc.arc(400, 200, 20, 0 * Math.PI / 180, 360 * Math.PI / 180, false);
+                ogc.stroke();
+                ogc.closePath();
+
+//        圆球（匀速从起始位置弹出的黑球）
+                for (var i = 0; i < ball.length; i++) {
+                    ogc.beginPath();
+                    ogc.moveTo(ball[i].x, ball[i].y);
+//        弧度=角度*math.PI/180
+                    ogc.arc(ball[i].x, ball[i].y, 20, 0 * Math.PI / 180, 360 * Math.PI / 180, false);
+                    ogc.fill();
+                }
+                ogc.save();
+                ogc.translate(300, 200)
+                ogc.rotate(iRotate);
+                ogc.translate(-20, -20)
+                ogc.drawImage(yImg, 0, 0);
+                ogc.restore();
+
+//        创建发射的弹球
+                for(var i=0;i<bullet.length;i++)
+                {
+                    ogc.save();
+                    ogc.beginPath();
+                    ogc.moveTo(bullet[i].x, bullet[i].y);
+//        弧度=角度*math.PI/180
+                    ogc.arc(bullet[i].x, bullet[i].y, 20, 0 * Math.PI / 180, 360 * Math.PI / 180, false);
+                    ogc.fillStyle='red';
+                    ogc.fill();
+                    ogc.restore();
+                }
+
+            }, 1000 / 60);
+            setInterval(function () {
+//              小黑球的运行轨迹，当角度驶到270的时候改变路线，驶到270+180的时候程序暂停，alert结束。
+                for (var i = 0; i < ball.length; i++) {
+                    ball[i].num++;
+                    if (ball[i].num++ >= 270) {
+                        ball[i].stroker = 150;
+                        ball[i].startx = 250;
+                        ball[i].starty = 50;
+                    }
+                    if (ball[i].num++ >= 270 + 180) {
+                        alert("game over!");
+                        window.location.reload();
+                    }
+                    ball[i].x = Math.sin(ball[i].num * Math.PI / 180) * ball[i].stroker + ball[i].startx;
+                    ball[i].y = ball[i].stroker - Math.cos(ball[i].num * Math.PI / 180) * ball[i].stroker + ball[i].starty;
+
+                }
+                for (var i=0;i<bullet.length;i++){
+                    bullet[i].x=bullet[i].x+bullet[i].sX;
+                    bullet[i].y=bullet[i].y+bullet[i].sY;
+                }
+                for(var i=0;i<bullet.length;i++){
+                    for (var j=0;j<ball.length;j++){
+                        if(hit(bullet[i].x,bullet[i].y,ball[j].x,ball[j].y)){
+                            bullet.splice(i,1);
+                            ball.splice(j,1);
+                            break;
+//                            alert('fff')
+                        }
+                    }
+
+                }
+
+            }, 30);
+            var ball = [];
+
+            setInterval(function () {
+                ball.push({
+                    x: 300,
+                    y: 0,
+                    r: 20,
+                    stroker: 200,
+                    num: 0,
+                    startx: 300,
+                    starty: 0
+                })
+            }, 800)
+        }
+        var iRotate = 0;
+        oC2.onmousemove = function (ev) {
+            var ev = ev || window.event;
+
+            var x = ev.clientX - oC2.offsetLeft;
+            var y = ev.clientY - oC2.offsetTop;
+
+            var a = x - 300;
+            var b = y - 200;
+            var c = Math.sqrt(a * a + b * b);
+
+            if (a > 0 && b > 0) {
+                iRotate = Math.asin(b / c) + 90 * Math.PI / 180;
+            }
+            else if (a > 0) {
+                iRotate = Math.asin(a / c);
+            }
+            if (a < 0 && b > 0) {
+                iRotate = -(Math.asin(b / c) + 90 * Math.PI / 180);
+            } else if (a < 0) {
+                iRotate = Math.asin(a / c);
+            }
+        }
+        var bullet=[];
+        oC2.onmousedown=function (ev) {
+            var ev = ev || window.event;
+
+            var x = ev.clientX - oC2.offsetLeft;
+            var y = ev.clientY - oC2.offsetTop;
+
+            var a = x - 300;
+            var b = y - 200;
+            var c = Math.sqrt(a * a + b * b);
+            var speed=5;
+
+            var sX=speed*a/c;
+            var sY=speed*b/c;
+
+            bullet.push({
+                x:300,
+                y:200,
+                sX:sX,
+                sY:sY
+            });
+        };
+    };
+
+    function hit(x1,y1,x2,y2) {
+        var a=x1-x2;
+        var b=y1-y2;
+
+        var c=Math.sqrt(a*a+b*b);
+        if(c<40){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+</script>
+</body>
+</html>
